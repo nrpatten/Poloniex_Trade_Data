@@ -15,18 +15,18 @@
 <body style="background-color: #808080;">
   <style>
   .dataTables_paginate {
-  margin: 2px 0px 0px 0px;
-  position: absolute;
-  text-align: right;
-  left: 30%;
+    margin: 2px 0px 0px 0px;
+    position: absolute;
+    text-align: right;
+    left: 30%;
   }
 
   .dataTables_length {
-  display: none;
+    display: none;
   }
 
   caption {
-  color: #000;
+    color: #000;
   }
   </style>
   <div class="container-fluid" style="margin-left:100px; margin-right:100px;">
@@ -41,17 +41,17 @@
               <div class="form-group" style="margin: 10px 0px -30px 0px; width: 210px;margin-left: auto;margin-right: auto;">
                 <div class="input-group">
                   <span class="input-group-addon" style="background-color:#808080; color:#ffffff;">
-				    <i class="glyphicon glyphicon-search"></i>
-				  </span>
-				  <input class="form-control" id="search" placeholder="Search expample: eth" type="text">
+                    <i class="glyphicon glyphicon-search"></i>
+                  </span>
+                  <input class="form-control" id="search" placeholder="Search expample: eth" type="text">
                 </div>
               </div>
               <center>
                 <br>
                 <b>BTC:</b> <span id="BTC" style="color: green;"><span>Waiting..</span></span>
-				<b>- USD:</b> <span id="USD" style="color: green;"><span>Waiting..</span></span>
-				<b>- CHANGE 24h:</b> <span id="CHANGE" style="color: green;"><span>Waiting..</span></span>
-				<b>- USD BTC:</b> <span id="USDB" style="color: green;"><span>Waiting..</span></span>
+                <b>- USD:</b> <span id="USD" style="color: green;"><span>Waiting..</span></span>
+                <b>- CHANGE 24h:</b> <span id="CHANGE" style="color: green;"><span>Waiting..</span></span>
+                <b>- USD BTC:</b> <span id="USDB" style="color: green;"><span>Waiting..</span></span>
               </center>
             </form>
           </div>
@@ -156,8 +156,8 @@
         }
         document.getElementById('CHANGE').innerHTML = ch;
 
-        $('#bids').DataTable().clear().destroy();
         // Buy Orders
+        $('#bids').DataTable().clear().destroy();
         var bidTable = $('#bids').DataTable({
           "order": [
             [0, 'dsc']
@@ -189,8 +189,8 @@
           }
         });
 
-        $('#asks').DataTable().clear().destroy();
         // Sell Orders
+        $('#asks').DataTable().clear().destroy();
         var askTable = $('#asks').DataTable({
           "order": [
             [0, 'asc']
