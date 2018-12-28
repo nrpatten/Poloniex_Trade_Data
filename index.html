@@ -5,6 +5,7 @@
   <title id="USDC"></title>
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/cryptocoins-icons@2.9.0/webfont/cryptocoins.css" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script src="https://code.highcharts.com/stock/highstock.js"></script>
@@ -17,8 +18,7 @@
   .dataTables_paginate {
     margin: 2px 0px 0px 0px;
     position: absolute;
-    text-align: right;
-    left: 30%;
+    left: 25%;
   }
 
   .dataTables_length {
@@ -27,6 +27,23 @@
 
   caption {
     color: #000;
+  }
+
+  table.dataTable tbody th, table.dataTable tbody td {
+    padding: 4px 10px;
+    font-weight: 600;
+  }
+
+  .glyphicon {
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    font-family: 'Glyphicons Halflings';
+    font-style: normal;
+    font-weight: 400;
+    line-height: inherit;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   </style>
   <div class="container-fluid" style="margin-left:100px; margin-right:100px;">
@@ -48,10 +65,10 @@
               </div>
               <center>
                 <br>
-                <b>BTC:</b> <span id="BTC" style="color: green;"><span>Waiting..</span></span>
-                <b>- USD:</b> <span id="USD" style="color: green;"><span>Waiting..</span></span>
-                <b>- CHANGE 24h:</b> <span id="CHANGE" style="color: green;"><span>Waiting..</span></span>
-                <b>- USD BTC:</b> <span id="USDB" style="color: green;"><span>Waiting..</span></span>
+                <b>BTC:</b> <span id="BTC" style="color: green; font-weight: bold;"><span>Waiting..</span></span>
+                <b>- USD:</b> <span id="USD" style="color: green; font-weight: bold;"><span>Waiting..</span></span>
+                <b>- CHANGE 24h:</b> <span id="CHANGE" style="color: green; font-weight: bold;"><span>Waiting..</span></span>
+                <b>- USD BTC:</b> <span id="USDB" style="color: green; font-weight: bold;"><span>Waiting..</span></span>
               </center>
             </form>
           </div>
@@ -71,7 +88,7 @@
                   <b>Buy Orders</b>
                 </caption>
                 <thead>
-                  <tr>
+                  <tr style="background-color: #bfbfbf;">
                     <th>Buy Price</th>
                     <th id="coin">Buy Amount</th>
                     <th>BTC Buy Amount</th>
@@ -86,7 +103,7 @@
                   <b>Sell Orders</b>
                 </caption>
                 <thead>
-                  <tr>
+                  <tr style="background-color: #bfbfbf;">
                     <th>Sell Price</th>
                     <th id="coin2">Sell Amount</th>
                     <th>BTC Sell Amount</th>
@@ -123,6 +140,66 @@
     "bPaginate": false
   });
 
+  $('#tradechart').highcharts('StockChart', {
+    rangeSelector: {
+      selected: 0
+    },
+    credits: {
+      enabled: false
+    },
+    navigator: {
+      enabled: false
+    },
+    scrollbar: {
+      enabled: false
+    },
+    rangeSelector: {
+      buttons: [{
+        type: 'hour',
+        count: 6,
+        text: '6h'
+      }, {
+        type: 'hour',
+        count: 24,
+        text: '24h'
+      }, {
+        type: 'day',
+        count: 2,
+        text: '2d'
+      }, {
+        type: 'day',
+        count: 4,
+        text: '4d'
+      }, {
+        type: 'week',
+        count: 1,
+        text: '1w'
+      }, {
+        type: 'week',
+        count: 2,
+        text: '2w'
+      }, {
+        type: 'month',
+        count: 1,
+        text: '1m'
+      }, {
+        type: 'all',
+        text: 'All'
+      }],
+      inputEnabled: false,
+      selected: 1
+    },
+    lang: {
+      noData: 'Waiting on search...'
+    },
+    noData: {
+      style: {
+        fontWeight: 'bold',
+        fontSize: '24px',
+        color: 'orange'
+      }
+    }
+  });
   $(document).ready(function() {
 
     function exactRound(num, decimals) {
@@ -131,245 +208,233 @@
       return (Math.round((num * Math.pow(10, decimals)) + (sign * 0.001)) / Math.pow(10, decimals)).toFixed(decimals);
     }
 
+    (function ($) {
+      $.fn.delayKeyup = function(callback, ms){
+        var timer = 0;
+        $(this).keyup(function(){
+          clearTimeout (timer);
+          timer = setTimeout(callback, ms);
+        });
+        return $(this);
+      };
+    })(jQuery);
+
     var btc_exp = null;
     var usd_btc = null;
     var expPrice = null;
     var searchField = null;
+    var inProgress = false;
+    $('#search').delayKeyup(function() {
+      if ($('#search').val().length >= 3) {
+        $.getJSON("https://poloniex.com/public?command=returnTicker").done(function(data) {
+          searchField = $('#search').val().toUpperCase();
+          btc_exp = data[('BTC_' + searchField)].last;
+          usd_btc = data.USDT_BTC.last;
+          expPrice = btc_exp * usd_btc;
+          change = exactRound(data[('BTC_' + searchField)].percentChange * 100, 2);
+          document.getElementById('BTC').innerHTML = '<i class="cc ' + searchField + '" style="color: #000; font: inherit;"></i> ' + btc_exp;
+          document.getElementById('USD').innerHTML = '<i class="glyphicon glyphicon-usd" style="font-size: 18px;"></i>' + parseFloat(expPrice).toFixed(2);
+          document.getElementById('USDB').innerHTML = '<i class="glyphicon glyphicon-usd" style="font-size: 18px;"></i>' + parseFloat(usd_btc).toFixed(2);
+          document.getElementById('USDC').innerHTML = searchField + ' $' + parseFloat(expPrice).toFixed(2) + ' - BTC $' + parseFloat(usd_btc).toFixed(2);
+          document.getElementById('coin').innerHTML = searchField + ' Buy Amount';
+          document.getElementById('coin2').innerHTML = searchField + ' Sell Amount';
+          if (change < 0) {
+            ch = ('<span style="color:red">' + change + '%' + '</\span>');
+          } else {
+            ch = ('<span style="color:green">' + '+' + change + '%' + '</\span>');
+          }
+          document.getElementById('CHANGE').innerHTML = ch;
 
-    $('#search').keyup(function() {
-      $.getJSON("https://poloniex.com/public?command=returnTicker").done(function(data) {
-        searchField = $('#search').val().toUpperCase();
-        btc_exp = data[('BTC_' + searchField)].last;
-        usd_btc = data.USDT_BTC.last;
-        expPrice = btc_exp * usd_btc;
-        change = exactRound(data[('BTC_' + searchField)].percentChange * 100, 2);
-        document.getElementById('BTC').innerHTML = btc_exp;
-        document.getElementById('USD').innerHTML = '$' + parseFloat(expPrice).toFixed(2);
-        document.getElementById('USDB').innerHTML = '$' + parseFloat(usd_btc).toFixed(2);
-        document.getElementById('USDC').innerHTML = searchField + ' $' + parseFloat(expPrice).toFixed(2) + ' - BTC $' + parseFloat(usd_btc).toFixed(2);
-        document.getElementById('coin').innerHTML = searchField + ' Buy Amount';
-        document.getElementById('coin2').innerHTML = searchField + ' Sell Amount';
-        if (change < 0) {
-          ch = ('<span style="color:red">' + change + '%' + '</\span>');
-        } else {
-          ch = ('<span style="color:green">' + '+' + change + '%' + '</\span>');
-        }
-        document.getElementById('CHANGE').innerHTML = ch;
-
-        // Buy Orders
-        $('#bids').DataTable().clear().destroy();
-        var bidTable = $('#bids').DataTable({
-          "order": [
-            [0, 'dsc']
-          ],
-          "retrieve": true,
-          "bDestroy": true,
-          "bFilter": false,
-          "bInfo": false,
-          "bPaginate": true,
-          "async": false,
-          "ajax": {
-            "url": "https://poloniex.com/public?command=returnOrderBook&currencyPair=BTC_" + searchField + "&depth=100",
-            "dataSrc": function(d) {
-              var bids = d.bids;
-              var values = [];
-              for (i = 0; i < bids.length; i++) {
-                values.push([
-                  bids[i][0],
-                  (bids[i][1]).toFixed(8),
-                  (bids[i][0] * bids[i][1]).toFixed(8),
-                  '$' + ((bids[i][0] * bids[i][1]) * usd_btc).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })
-                ]);
+          // Buy Orders
+          $('#bids').DataTable().clear().destroy();
+          var bidTable = $('#bids').DataTable({
+            "order": [
+              [0, 'dsc']
+            ],
+            "retrieve": true,
+            "bDestroy": true,
+            "bFilter": false,
+            "bInfo": false,
+            "bPaginate": true,
+            "async": false,
+            "ajax": {
+              "url": "https://poloniex.com/public?command=returnOrderBook&currencyPair=BTC_" + searchField + "&depth=100",
+              "dataSrc": function(d) {
+                var bids = d.bids;
+                var values = [];
+                for (i = 0; i < bids.length; i++) {
+                  values.push([
+                    '<i class="cc ' + searchField + '" style="font-size: 18px;"></i> ' + bids[i][0],
+                    '<i class="cc ' + searchField + '" style="font-size: 18px;"></i> ' + (bids[i][1]).toFixed(8),
+                    '<i class="cc BTC" style="font-size: 18px;"></i> ' + (bids[i][0] * bids[i][1]).toFixed(8),
+                    '<i class="glyphicon glyphicon-usd" style="font-size: 14px; top: 2px;"></i>' + ((bids[i][0] * bids[i][1]) * usd_btc).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })
+                  ]);
+                }
+                return values;
               }
-              return values;
             }
+          });
+
+          // Sell Orders
+          $('#asks').DataTable().clear().destroy();
+          var askTable = $('#asks').DataTable({
+            "order": [
+              [0, 'asc']
+            ],
+            "retrieve": true,
+            "bDestroy": true,
+            "bFilter": false,
+            "bInfo": false,
+            "bPaginate": true,
+            "async": false,
+            "ajax": {
+              "url": "https://poloniex.com/public?command=returnOrderBook&currencyPair=BTC_" + searchField + "&depth=100",
+              "dataSrc": function(d) {
+                var asks = d.asks;
+                var values = [];
+                for (i = 0; i < asks.length; i++) {
+                  values.push([
+                    '<i class="cc ' + searchField + '" style="font-size: 18px;"></i> ' + asks[i][0],
+                    '<i class="cc ' + searchField + '" style="font-size: 18px;"></i> ' + (asks[i][1]).toFixed(8),
+                    '<i class="cc BTC" style="font-size: 18px;"></i> ' + (asks[i][0] * asks[i][1]).toFixed(8),
+                    '<i class="glyphicon glyphicon-usd" style="font-size: 14px; top: 2px;"></i>' + ((asks[i][0] * asks[i][1]) * usd_btc).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })
+                  ]);
+                }
+                return values;
+              }
+            }
+          });
+
+          var refreshTables = setInterval(function() {
+            bidTable.state.clear();
+            bidTable.ajax.reload(null, false);
+            askTable.state.clear();
+            askTable.ajax.reload(null, false);
+          }, 6000);
+        });
+
+        Highcharts.setOptions({
+          global: {
+            useUTC: false
           }
         });
 
-        // Sell Orders
-        $('#asks').DataTable().clear().destroy();
-        var askTable = $('#asks').DataTable({
-          "order": [
-            [0, 'asc']
-          ],
-          "retrieve": true,
-          "bDestroy": true,
-          "bFilter": false,
-          "bInfo": false,
-          "bPaginate": true,
-          "async": false,
-          "ajax": {
-            "url": "https://poloniex.com/public?command=returnOrderBook&currencyPair=BTC_" + searchField + "&depth=100",
-            "dataSrc": function(d) {
-              var asks = d.asks;
-              var values = [];
-              for (i = 0; i < asks.length; i++) {
-                values.push([
-                  asks[i][0],
-                  (asks[i][1]).toFixed(8),
-                  (asks[i][0] * asks[i][1]).toFixed(8),
-                  '$' + ((asks[i][0] * asks[i][1]) * usd_btc).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })
-                ]);
-              }
-              return values;
-            }
-          }
-        });
-
-        setInterval(function() {
-          bidTable.state.clear();
-          bidTable.ajax.reload(null, false);
-          askTable.state.clear();
-          askTable.ajax.reload(null, false);
-        }, 6000);
-      });
-
-      Highcharts.setOptions({
-        global: {
-          useUTC: false
-        }
-      });
-
-      Highcharts.theme = {
-        chart: {
-          borderColor: 'rgb(128, 128, 128)',
-          backgroundColor: {
-            linearGradient: {
-              x1: 0,
-              y1: 0,
-              x2: 1,
-              y2: 1
+        Highcharts.theme = {
+          chart: {
+            borderColor: 'rgb(128, 128, 128)',
+            backgroundColor: {
+              linearGradient: {
+                x1: 0,
+                y1: 0,
+                x2: 1,
+                y2: 1
+              },
+              stops: [
+                [0, 'rgb(255, 255, 255)'],
+                [1, 'rgb(128, 128, 128)']
+              ]
             },
-            stops: [
-              [0, 'rgb(255, 255, 255)'],
-              [1, 'rgb(128, 128, 128)']
-            ]
-          },
-          borderWidth: 2,
-          plotBackgroundColor: '#f2f2f2',
-          plotShadow: true,
-          plotBorderWidth: 1
-        },
-        title: {
-          style: {
-            color: '#000',
-            font: 'bold 16px "Trebuchet MS", Verdana, sans-serif'
-          }
-        },
-        subtitle: {
-          style: {
-            color: '#666666',
-            font: 'bold 12px "Trebuchet MS", Verdana, sans-serif'
-          }
-        },
-        xAxis: {
-          gridLineWidth: 1,
-          lineColor: '#000',
-          tickColor: '#000',
-          labels: {
-            style: {
-              color: '#000',
-              font: '11px Trebuchet MS, Verdana, sans-serif'
-            }
+            borderWidth: 2,
+            plotBackgroundColor: '#f2f2f2',
+            plotShadow: true,
+            plotBorderWidth: 1
           },
           title: {
             style: {
-              color: '#333',
-              fontWeight: 'bold',
-              fontSize: '12px',
-              fontFamily: 'Trebuchet MS, Verdana, sans-serif'
+              color: '#000',
+              font: 'bold 16px "Trebuchet MS", Verdana, sans-serif'
             }
-          }
-        },
-        yAxis: {
-          minorTickInterval: 'auto',
-          lineColor: '#000',
-          lineWidth: 1,
-          tickWidth: 1,
-          tickColor: '#000',
+          },
+          subtitle: {
+            style: {
+              color: '#666666',
+              font: 'bold 12px "Trebuchet MS", Verdana, sans-serif'
+            }
+          },
+          xAxis: {
+            gridLineWidth: 1,
+            lineColor: '#000',
+            tickColor: '#000',
+            labels: {
+              style: {
+                color: '#000',
+                font: '11px Trebuchet MS, Verdana, sans-serif'
+              }
+            },
+            title: {
+              style: {
+                color: '#333',
+                fontWeight: 'bold',
+                fontSize: '12px',
+                fontFamily: 'Trebuchet MS, Verdana, sans-serif'
+              }
+            }
+          },
+          yAxis: {
+            minorTickInterval: 'auto',
+            lineColor: '#000',
+            lineWidth: 1,
+            tickWidth: 1,
+            tickColor: '#000',
+            labels: {
+              style: {
+                color: '#000',
+                font: '10px Trebuchet MS, Verdana, sans-serif'
+              }
+            },
+            title: {
+              style: {
+                color: '#333',
+                fontWeight: 'bold',
+                fontSize: '12px',
+                fontFamily: 'Trebuchet MS, Verdana, sans-serif'
+              }
+            }
+          },
+          tooltip: {
+            valueDecimals: 8
+          },
+          legend: {
+            itemStyle: {
+              font: '9pt Trebuchet MS, Verdana, sans-serif',
+              color: 'black'
+            },
+            itemHoverStyle: {
+              color: '#039'
+            },
+            itemHiddenStyle: {
+              color: 'gray'
+            }
+          },
           labels: {
             style: {
-              color: '#000',
-              font: '10px Trebuchet MS, Verdana, sans-serif'
+              color: '#99b'
             }
           },
-          title: {
-            style: {
-              color: '#333',
-              fontWeight: 'bold',
-              fontSize: '12px',
-              fontFamily: 'Trebuchet MS, Verdana, sans-serif'
+          navigation: {
+            buttonOptions: {
+              theme: {
+                stroke: '#CCCCCC'
+              }
             }
-          }
-        },
-        tooltip: {
-          valueDecimals: 8
-        },
-        legend: {
-          itemStyle: {
-            font: '9pt Trebuchet MS, Verdana, sans-serif',
-            color: 'black'
           },
-          itemHoverStyle: {
-            color: '#039'
-          },
-          itemHiddenStyle: {
-            color: 'gray'
-          }
-        },
-        labels: {
-          style: {
-            color: '#99b'
-          }
-        },
-        navigation: {
-          buttonOptions: {
-            theme: {
-              stroke: '#CCCCCC'
-            }
-          }
-        },
-      };
+        };
 
-      var highchartsOptions = Highcharts.setOptions(Highcharts.theme);
-
-      function afterSetExtremes(e) {
-        var chart = $('#tradechart').highcharts();
-        $.getJSON('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_' + searchField + '&start=0&end=9999999999&period=1800', function(chartdata) {
-          chart.series[0].setData(chartdata);
-        });
-      }
-
-      $.getJSON('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_' + searchField + '&start=' + 0 + '&end=' + 9999999999 + '&period=300', function(chartdata) {
-        var high = [];
-        var volume = [];
-        dataLength = chartdata.length,
-          i = 0;
-        for (i; i < chartdata.length; i += 1) {
-          high.push([
-            chartdata[i].date * 1000,
-            chartdata[i].open,
-            chartdata[i].high,
-            chartdata[i].low,
-            chartdata[i].close
-          ]);
-          volume.push([
-            chartdata[i].date * 1000,
-            chartdata[i].volume
-          ]);
+        var highchartsOptions = Highcharts.setOptions(Highcharts.theme);
+        searchField = $('#search').val().toUpperCase();
+        function afterSetExtremes(e) {
+          var chart = $('#tradechart').highcharts();
         }
+
         $('#tradechart').highcharts('StockChart', {
           rangeSelector: {
             selected: 0
-          },
-          title: {
-            text: '(' + searchField + ') Exchange Rate Chart'
           },
           credits: {
             enabled: false
@@ -382,10 +447,6 @@
           },
           rangeSelector: {
             buttons: [{
-              type: 'hour',
-              count: 3,
-              text: '3h'
-            }, {
               type: 'hour',
               count: 6,
               text: '6h'
@@ -418,63 +479,10 @@
               text: 'All'
             }],
             inputEnabled: false,
-            selected: 2
+            selected: 1
           },
-          yAxis: {
-            events: {
-              afterSetExtremes: afterSetExtremes
-            },
-            minRange: 3600 * 6000
-          },
-          yAxis: [{
-            labels: {
-              align: 'left',
-              x: 3,
-              format: '{value:.8f}'
-            },
-            title: {
-              text: 'Price'
-            },
-            height: '83%',
-            lineWidth: 1
-          }, {
-            labels: {
-              align: 'left',
-              x: 3,
-            },
-            title: {
-              text: 'Volume'
-            },
-            top: '84%',
-            height: '16%',
-            lineWidth: 1,
-            offset: 0
-          }],
-          plotOptions: {
-            candlestick: {
-              color: 'rgba(255, 0, 0, 0.6)',
-              upColor: 'rgba(0, 128, 0, 0.6)'
-            },
-            column: {
-              color: 'rgba(120, 120, 120, 0.6)'
-            }
-          },
-          series: [{
-            shadow: true,
-            type: 'candlestick',
-            id: 'high',
-            name: searchField,
-            data: high
-          }, {
-            shadow: true,
-            type: 'column',
-            id: 'volume',
-            name: 'Volume',
-            data: volume,
-            yAxis: 1
-          }],
           lang: {
-            noData: 'Loading Chart Data Please Wait'
+            noData: 'Please Wait Loading Data...'
           },
           noData: {
             style: {
@@ -484,35 +492,12 @@
             }
           }
         });
-      });
 
-      var refreshPolo = setInterval(function() {
-        $.getJSON("https://poloniex.com/public?command=returnTicker").done(function(data) {
-          btc_exp = data[('BTC_' + searchField)].last;
-          usd_btc = data.USDT_BTC.last;
-          expPrice = btc_exp * usd_btc;
-          change = exactRound(data[('BTC_' + searchField)].percentChange * 100, 2);
-          document.getElementById('BTC').innerHTML = btc_exp;
-          document.getElementById('USD').innerHTML = '$' + parseFloat(expPrice).toFixed(2);
-          document.getElementById('USDB').innerHTML = '$' + parseFloat(usd_btc).toFixed(2);
-          document.getElementById('USDC').innerHTML = searchField + ' $' + parseFloat(expPrice).toFixed(2) + ' - BTC $' + parseFloat(usd_btc).toFixed(2);
-          document.getElementById('coin').innerHTML = searchField + ' Buy Amount';
-          document.getElementById('coin2').innerHTML = searchField + ' Sell Amount';
-          if (change < 0) {
-            ch = ('<span style="color:red">' + change + '%' + '</\span>');
-          } else {
-            ch = ('<span style="color:green">' + '+' + change + '%' + '</\span>');
-          }
-          document.getElementById('CHANGE').innerHTML = ch;
-        });
-      }, 6000);
-
-      var refreshChart = setInterval(function() {
         $.getJSON('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_' + searchField + '&start=' + 0 + '&end=' + 9999999999 + '&period=300', function(chartdata) {
           var high = [];
           var volume = [];
           dataLength = chartdata.length,
-            i = 0;
+          i = 0;
           for (i; i < chartdata.length; i += 1) {
             high.push([
               chartdata[i].date * 1000,
@@ -545,10 +530,6 @@
             rangeSelector: {
               buttons: [{
                 type: 'hour',
-                count: 3,
-                text: '3h'
-              }, {
-                type: 'hour',
                 count: 6,
                 text: '6h'
               }, {
@@ -580,7 +561,7 @@
                 text: 'All'
               }],
               inputEnabled: false,
-              selected: 2
+              selected: 1
             },
             yAxis: {
               events: {
@@ -634,11 +615,170 @@
               name: 'Volume',
               data: volume,
               yAxis: 1
-            }]
+            }],
+            lang: {
+              noData: 'Loading Error Please Try Again..'
+            },
+            noData: {
+              style: {
+                fontWeight: 'bold',
+                fontSize: '24px',
+                color: 'orange'
+              }
+            }
           });
         });
-      }, 10000);
-    });
+
+        var refreshPolo = setInterval(function() {
+          $.getJSON("https://poloniex.com/public?command=returnTicker").done(function(data) {
+            btc_exp = data[('BTC_' + searchField)].last;
+            usd_btc = data.USDT_BTC.last;
+            expPrice = btc_exp * usd_btc;
+            change = exactRound(data[('BTC_' + searchField)].percentChange * 100, 2);
+            document.getElementById('BTC').innerHTML = '<i class="cc ' + searchField + '" style="color: #000; font: inherit;"></i> ' + btc_exp;
+            document.getElementById('USD').innerHTML = '$' + parseFloat(expPrice).toFixed(2);
+            document.getElementById('USDB').innerHTML = '$' + parseFloat(usd_btc).toFixed(2);
+            document.getElementById('USDC').innerHTML = searchField + ' $' + parseFloat(expPrice).toFixed(2) + ' - BTC $' + parseFloat(usd_btc).toFixed(2);
+            document.getElementById('coin').innerHTML = searchField + ' Buy Amount';
+            document.getElementById('coin2').innerHTML = searchField + ' Sell Amount';
+            if (change < 0) {
+              ch = ('<span style="color:red">' + change + '%' + '</\span>');
+            } else {
+              ch = ('<span style="color:green">' + '+' + change + '%' + '</\span>');
+            }
+            document.getElementById('CHANGE').innerHTML = ch;
+          });
+        }, 6000);
+
+        var refreshChart = setInterval(function() {
+          $.getJSON('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_' + searchField + '&start=' + 0 + '&end=' + 9999999999 + '&period=300', function(chartdata) {
+            var high = [];
+            var volume = [];
+            dataLength = chartdata.length,
+            i = 0;
+            for (i; i < chartdata.length; i += 1) {
+              high.push([
+                chartdata[i].date * 1000,
+                chartdata[i].open,
+                chartdata[i].high,
+                chartdata[i].low,
+                chartdata[i].close
+              ]);
+              volume.push([
+                chartdata[i].date * 1000,
+                chartdata[i].volume
+              ]);
+            }
+            $('#tradechart').highcharts('StockChart', {
+              rangeSelector: {
+                selected: 0
+              },
+              title: {
+                text: '(' + searchField + ') Exchange Rate Chart'
+              },
+              credits: {
+                enabled: false
+              },
+              navigator: {
+                enabled: false
+              },
+              scrollbar: {
+                enabled: false
+              },
+              rangeSelector: {
+                buttons: [{
+                  type: 'hour',
+                  count: 6,
+                  text: '6h'
+                }, {
+                  type: 'hour',
+                  count: 24,
+                  text: '24h'
+                }, {
+                  type: 'day',
+                  count: 2,
+                  text: '2d'
+                }, {
+                  type: 'day',
+                  count: 4,
+                  text: '4d'
+                }, {
+                  type: 'week',
+                  count: 1,
+                  text: '1w'
+                }, {
+                  type: 'week',
+                  count: 2,
+                  text: '2w'
+                }, {
+                  type: 'month',
+                  count: 1,
+                  text: '1m'
+                }, {
+                  type: 'all',
+                  text: 'All'
+                }],
+                inputEnabled: false,
+                selected: 1
+              },
+              yAxis: {
+                events: {
+                  afterSetExtremes: afterSetExtremes
+                },
+                minRange: 3600 * 6000
+              },
+              yAxis: [{
+                labels: {
+                  align: 'left',
+                  x: 3,
+                  format: '{value:.8f}'
+                },
+                title: {
+                  text: 'Price'
+                },
+                height: '83%',
+                lineWidth: 1
+              }, {
+                labels: {
+                  align: 'left',
+                  x: 3,
+                },
+                title: {
+                  text: 'Volume'
+                },
+                top: '84%',
+                height: '16%',
+                lineWidth: 1,
+                offset: 0
+              }],
+              plotOptions: {
+                candlestick: {
+                  color: 'rgba(255, 0, 0, 0.6)',
+                  upColor: 'rgba(0, 128, 0, 0.6)'
+                },
+                column: {
+                  color: 'rgba(120, 120, 120, 0.6)'
+                }
+              },
+              series: [{
+                shadow: true,
+                type: 'candlestick',
+                id: 'high',
+                name: searchField,
+                data: high
+              }, {
+                shadow: true,
+                type: 'column',
+                id: 'volume',
+                name: 'Volume',
+                data: volume,
+                yAxis: 1
+              }]
+            });
+          });
+        }, 300000);
+      }
+    }, 3000);
   });
   </script>
 </body>
