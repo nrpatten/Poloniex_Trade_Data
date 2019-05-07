@@ -160,10 +160,6 @@
     rangeSelector: {
       buttons: [{
         type: 'hour',
-        count: 6,
-        text: '6h'
-      }, {
-        type: 'hour',
         count: 24,
         text: '24h'
       }, {
@@ -452,10 +448,6 @@
           rangeSelector: {
             buttons: [{
               type: 'hour',
-              count: 6,
-              text: '6h'
-            }, {
-              type: 'hour',
               count: 24,
               text: '24h'
             }, {
@@ -499,7 +491,7 @@
 
         var high = [];
         var volume = [];
-        $.getJSON('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_' + searchField + '&start=' + 0 + '&end=' + 9999999999 + '&period=300', function(chartdata) {
+        $.getJSON('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_' + searchField + '&start=' + 0 + '&end=' + 9999999999 + '&period=7200', function(chartdata) {
           var high = [];
           var volume = [];
           dataLength = chartdata.length,
@@ -535,10 +527,6 @@
             },
             rangeSelector: {
               buttons: [{
-                type: 'hour',
-                count: 6,
-                text: '6h'
-              }, {
                 type: 'hour',
                 count: 24,
                 text: '24h'
@@ -657,7 +645,7 @@
         }, 2000);
 
         var refreshChart = setInterval(function() {
-          $.getJSON('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_' + searchField + '&start=' + 0 + '&end=' + 9999999999 + '&period=300', function(chartdata) {
+          $.getJSON('https://poloniex.com/public?command=returnChartData&currencyPair=BTC_' + searchField + '&start=' + 0 + '&end=' + 9999999999 + '&period=7200', function(chartdata) {
             var high = [];
             var volume = [];
             dataLength = chartdata.length,
@@ -693,10 +681,6 @@
               },
               rangeSelector: {
                 buttons: [{
-                  type: 'hour',
-                  count: 6,
-                  text: '6h'
-                }, {
                   type: 'hour',
                   count: 24,
                   text: '24h'
